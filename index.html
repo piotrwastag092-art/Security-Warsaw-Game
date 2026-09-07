@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OCHRONA BIURA – Symulator</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+
+  :root {
+    --bg: #0d1117;
+    --panel: #161b22;
+    --border: #30363d;
+    --accent: #58a6ff;
+    --danger: #f85149;
+    --success: #3fb950;
+    --warn: #d29922;
+    --text: #e6edf3;
+    --muted: #8b949e;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'VT323', monospace;
+    font-size: 22px;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ===== SCREENS ===== */
+  .screen { display: none; min-height: 100vh; padding: 20px; }
+  .screen.active { display: flex; flex-direction: column; align-items: center; }
+
+  /* ===== TITLE ===== */
+  #title-screen {
+    justify-content: center;
+    background: radial-gradient(ellipse at center, #1a2332 0%, #0d1117 70%);
+    text-align: center;
+  }
+  #title-screen h1 {
+    font-family: 'Press Start 2P', cursive;
+    font-size: clamp(18px, 4vw, 36px);
+    color: #58a6ff;
+    text-shadow: 0 0 20px #58a6ff88, 4px 4px 0 #000;
+    margin-bottom: 10px;
+    line-height: 1.4;
+  }
+  #title-screen .subtitle {
+    color: var(--muted);
+    font-size: 28px;
+    margin-bottom: 40px;
+  }
+  .btn {
+    background: linear-gradient(180deg, #238636, #1a7f37);
+    border: 3px solid #3fb950;
+    color: #fff;
+    font-family: 'Press Start 2P', cursive;
+    font-size: 14px;
+    padding: 16px 32px;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: all 0.15s;
+    text-transform: uppercase;
+  }
+  .btn:hover { transform: scale(1.05); box-shadow: 0 0 20px #3fb95066; }
+  .btn:active { transform: scale(0.97); }
+  .btn.secondary {
+    background: linear-gradient(180deg, #21262d, #161b22);
+    border-color: var(--border);
+  }
+  .btn.danger {
+    background: linear-gradient(180deg, #da3633, #b62324);
+    border-color: var(--danger);
+  }
+
+  /* ===== CHARACTER SELECT ===== */
+  #select-screen h2 {
+    font-family: 'Press Start 2P', cursive;
+    font-size: 20px;
+    margin-bottom: 30px;
+    color: var(--accent);
+  }
+  .char-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 16px;
+    max-width: 900px;
+    width: 100%;
+    margin-bottom: 30px;
+  }
+  .char-card {
+    background: var(--panel);
+    border: 3px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 12px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+  }
+  .char-card:hover, .char-card.selected {
+    border-color: var(--accent);
+    box-shadow: 0 0 15px #58a6ff44;
+    transform: translateY(-4px);
+  }
+  .char-card.selected { background: #1c2a3a; }
+  .char-avatar {
+    width: 80px; height: 80px;
+    margin: 0 auto 12px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 42px;
+    background: #21262d;
+    border: 3px solid var(--border);
+  }
+  .char-name {
+    font-family: 'Press Start 2P', cursive;
+    font-size: 12px;
+    margin-bottom: 6px;
+  }
+  .char-role { color: var(--muted); font-size: 18px; }
+
+  /* ===== GAME UI ===== */
+  #game-screen {
+    padding: 0;
+    height: 100vh;
+    max-height: 100vh;
+    overflow: hidden;
+  }
+  .top-bar {
+    background: var(--panel);
+    border-bottom: 3px solid var(--border);
+    padding: 10px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    width: 100%;
+  }
+  .stat {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 20px;
+  }
+  .stat .label { color: var(--muted); }
+  .stat .value { color: var(--accent); font-weight: bold; }
+  .stat.danger .value { color: var(--danger); }
+  .stat.warn .value { color: var(--warn); }
+
+  .main-area {
+    display: flex;
+    flex: 1;
+    height: calc(100vh - 120px);
+    width: 100%;
+  }
+
+  /* LEFT: MAP / OFFICE */
+  .office-view {
+    flex: 1.4;
+    background: #0d1117;
+    position: relative;
+    overflow: hidden;
+    border-right: 3px solid var(--border);
+  }
+  .office-bg {
+    width: 100%; height: 100%;
+    background:
+      radial-gradient(circle at 20% 30%, #1a2a3a 0%, transparent 40%),
+      radial-gradient(circle at 80% 70%, #1a1a2e 0%, transparent 40%),
+      linear-gradient(180deg, #0d1117 0%, #111822 100%);
+    position: relative;
+  }
+  .room {
+    position: absolute;
+    border: 2px solid #30363d;
+    border-radius: 8px;
+    background: rgba(22, 27, 34, 0.85);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    padding: 8px;
+  }
+  .room:hover { border-color: var(--accent); background: rgba(30, 40, 55, 0.95); }
+  .room.active { border-color: #3fb950; box-shadow: 0 0 12px #3fb95044; }
+  .room .icon { font-size: 28px; margin-bottom: 4px; }
+  .room .name { font-size: 14px; color: var(--muted); text-align: center; }
+  .room.has-event { animation: pulse 1.2s infinite; border-color: var(--danger); }
+
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 8px #f8514988; }
+    50% { box-shadow: 0 0 20px #f85149; }
+  }
+
+  /* RIGHT: LOG + ACTIONS */
+  .side-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: var(--panel);
+    max-width: 420px;
+  }
+  .log-area {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px;
+    font-size: 18px;
+    line-height: 1.4;
+  }
+  .log-entry {
+    margin-bottom: 10px;
+    padding: 8px 10px;
+    border-radius: 6px;
+    border-left: 4px solid var(--border);
+    background: #0d1117;
+  }
+  .log-entry.system { border-color: var(--accent); }
+  .log-entry.event { border-color: var(--warn); }
+  .log-entry.success { border-color: var(--success); }
+  .log-entry.danger { border-color: var(--danger); }
+  .log-entry.boss { border-color: #a371f7; }
+  .log-time { color: var(--muted); font-size: 14px; margin-right: 6px; }
+
+  .action-panel {
+    border-top: 3px solid var(--border);
+    padding: 12px;
+    background: #0d1117;
+  }
+  .action-title {
+    font-family: 'Press Start 2P', cursive;
+    font-size: 11px;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .action-btn {
+    background: #21262d;
+    border: 2px solid var(--border);
+    color: var(--text);
+    font-family: 'VT323', monospace;
+    font-size: 18px;
+    padding: 8px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .action-btn:hover:not(:disabled) {
+    border-color: var(--accent);
+    background: #1c2a3a;
+  }
+  .action-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  /* BOTTOM STATUS */
+  .bottom-bar {
+    background: var(--panel);
+    border-top: 3px solid var(--border);
+    padding: 8px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    font-size: 18px;
+  }
+
+  /* MODAL */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.75);
+    display: none;
+    align-items: center; justify-content: center;
+    z-index: 100;
+    padding: 20px;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal {
+    background: var(--panel);
+    border: 3px solid var(--border);
+    border-radius: 12px;
+    max-width: 520px;
+    width: 100%;
+    padding: 24px;
+    text-align: center;
+  }
+  .modal h3 {
+    font-family: 'Press Start 2P', cursive;
+    font-size: 16px;
+    margin-bottom: 16px;
+    color: var(--accent);
+  }
+  .modal p { margin-bottom: 20px; line-height: 1.5; font-size: 20px; }
+  .modal-btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+
+  /* CHARACTER SPRITES (emoji based) */
+  .npc {
+    position: absolute;
+    font-size: 32px;
+    transition: all 0.8s ease;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+    z-index: 5;
+    cursor: default;
+  }
+  .npc.player { z-index: 10; font-size: 36px; filter: drop-shadow(0 0 8px #58a6ff); }
+
+  /* TOAST */
+  .toast {
+    position: fixed;
+    top: 80px; right: 20px;
+    background: #1c2a3a;
+    border: 2px solid var(--accent);
+    padding: 12px 18px;
+    border-radius: 8px;
+    font-size: 18px;
+    z-index: 200;
+    opacity: 0;
+    transform: translateX(50px);
+    transition: all 0.3s;
+    max-width: 320px;
+  }
+  .toast.show { opacity: 1; transform: translateX(0); }
+
+  /* RESPONSIVE */
+  @media (max-width: 800px) {
+    .main-area { flex-direction: column; height: auto; }
+    .office-view { height: 320px; border-right: none; border-bottom: 3px solid var(--border); }
+    .side-panel { max-width: 100%; height: 400px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- TITLE -->
+<div id="title-screen" class="screen active">
+  <h1>OCHRONA<br>BIURA</h1>
+  <div class="subtitle">Symulator pracownika ochrony • Edycja absurdalna</div>
+  <button class="btn" onclick="showSelect()">START GRY</button>
+  <p style="margin-top:40px;color:var(--muted);font-size:18px;">
+    Szef: MARCIN • Zastępca: PAULA<br>
+    Sprzątanie: Halynka + Katia • Biuro: Indusi
+  </p>
+</div>
+
+<!-- SELECT -->
+<div id="select-screen" class="screen">
+  <h2>Wybierz swojego ochroniarza</h2>
+  <div class="char-grid" id="char-grid"></div>
+  <button class="btn" id="start-btn" disabled onclick="startGame()">ROZPOCZNIJ SŁUŻBĘ</button>
+</div>
+
+<!-- GAME -->
+<div id="game-screen" class="screen">
+  <div class="top-bar">
+    <div class="stat"><span class="label">OCHRONIARZ:</span> <span class="value" id="player-name">—</span></div>
+    <div class="stat"><span class="label">CZAS:</span> <span class="value" id="game-time">08:00</span></div>
+    <div class="stat"><span class="label">STRES:</span> <span class="value" id="stress">0%</span></div>
+    <div class="stat"><span class="label">PRESTIŻ:</span> <span class="value" id="prestige">50</span></div>
+    <div class="stat danger"><span class="label">INCIDENTY:</span> <span class="value" id="incidents">0</span></div>
+  </div>
+
+  <div class="main-area">
+    <div class="office-view">
+      <div class="office-bg" id="office-bg">
+        <!-- rooms injected by JS -->
+      </div>
+    </div>
+
+    <div class="side-panel">
+      <div class="log-area" id="log"></div>
+      <div class="action-panel">
+        <div class="action-title">DOSTĘPNE AKCJE</div>
+        <div class="actions" id="actions"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bottom-bar">
+    <div id="status-text">Jesteś na posterunku. Czekaj na wydarzenia...</div>
+    <div>
+      <button class="action-btn" onclick="reportToBoss()">Zgłoś do szefa</button>
+      <button class="action-btn" onclick="callPaula()">Zadzwoń do Pauli</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <h3 id="modal-title">Wydarzenie!</h3>
+    <p id="modal-text"></p>
+    <div class="modal-btns" id="modal-btns"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ================== DATA ==================
+const GUARDS = [
+  { id: 'piotrek', name: 'PIOTREK', emoji: '👮‍♂️', desc: 'Weteran. Lubi kawę i narzekać.' },
+  { id: 'artur', name: 'ARTUR', emoji: '🕵️', desc: 'Zawsze coś podejrzewa.' },
+  { id: 'macius', name: 'MACIUŚ', emoji: '🥋', desc: 'Ćwiczy judo w dyżurce.' },
+  { id: 'lukasz', name: 'ŁUKASZ', emoji: '👓', desc: 'Czyta regulamin na głos.' },
+  { id: 'milena', name: 'MILENA', emoji: '👩‍✈️', desc: 'Najbardziej ogarnięta z ekipy.' },
+  { id: 'szymon', name: 'SZYMON', emoji: '🫡', desc: 'Młody, ambitny, trochę naiwny.' }
+];
+
+const ROOMS = [
+  { id: 'recepcja', name: 'Recepcja', icon: '🚪', x: 5, y: 8, w: 22, h: 22 },
+  { id: 'open_space', name: 'Open Space', icon: '💻', x: 30, y: 5, w: 40, h: 30 },
+  { id: 'kuchnia', name: 'Kuchnia', icon: '☕', x: 73, y: 8, w: 22, h: 20 },
+  { id: 'toalety', name: 'Toalety', icon: '🚽', x: 5, y: 38, w: 18, h: 20 },
+  { id: 'serwerownia', name: 'Serwerownia', icon: '🖥️', x: 28, y: 42, w: 25, h: 22 },
+  { id: 'parking', name: 'Parking', icon: '🚗', x: 58, y: 42, w: 37, h: 25 },
+  { id: 'dyzurka', name: 'Dyżurka', icon: '🛡️', x: 5, y: 68, w: 25, h: 22 },
+  { id: 'magazyn', name: 'Magazyn', icon: '📦', x: 35, y: 72, w: 30, h: 20 }
+];
+
+const EVENTS = [
+  {
+    id: 'indus_curry',
+    title: '🚨 ALARM KUCHENNY',
+    text: 'Indusi gotują curry w kuchni. Zapach jest tak intensywny, że detektory dymu wariują. Halynka krzyczy „Ja nie będę tego myć!”',
+    room: 'kuchnia',
+    choices: [
+      { label: 'Wyłącz alarm i otwórz okna', effect: { stress: -5, prestige: 5, log: 'Udało się uspokoić sytuację. Indusi dziękują i oferują porcję.' } },
+      { label: 'Zgłoś do szefa Marcina', effect: { stress: 10, prestige: -5, log: 'Marcin: „Dlaczego mnie budzisz o curry?! Rozwiąż to sam!”' } },
+      { label: 'Zjedz z nimi', effect: { stress: -15, prestige: 0, log: 'Najlepsze curry w życiu. Halynka patrzy z dezaprobatą.' } }
+    ]
+  },
+  {
+    id: 'halynka_woda',
+    title: '💧 HALYNKA VS WODA',
+    text: 'Halynka zalała open space, bo „podłoga była brudna od stóp Indusów”. Katia próbuje zbierać wodę mopem, ale tylko rozmazuje.',
+    room: 'open_space',
+    choices: [
+      { label: 'Pomóż sprzątać', effect: { stress: 5, prestige: 10, log: 'Halynka: „Dobry chłopak/dziewczyna. Dam Ci herbatę później.”' } },
+      { label: 'Zrób zdjęcie i wyślij Pauli', effect: { stress: 0, prestige: 5, log: 'Paula: „Klasyczna Halynka. Dziękuję za raport.”' } },
+      { label: 'Udawaj, że nie widzisz', effect: { stress: -5, prestige: -10, log: 'Woda doszła do serwerowni. Marcin jest wściekły.' } }
+    ]
+  },
+  {
+    id: 'indus_yoga',
+    title: '🧘 MEDYTACJA W OPEN SPACE',
+    text: 'Cała grupa Indusów siedzi w lotusie na biurkach i medytuje. Jeden z nich lewitował... albo tak Ci się wydawało.',
+    room: 'open_space',
+    choices: [
+      { label: 'Dołącz do medytacji', effect: { stress: -20, prestige: 0, log: 'Osiągnąłeś wewnętrzny spokój. Przez 10 minut nic Cię nie obchodzi.' } },
+      { label: 'Poproś o przerwanie (regulamin!)', effect: { stress: 10, prestige: 5, log: 'Indusi grzecznie wrócili do pracy. Jeden mruknął „western mind...”' } },
+      { label: 'Zrób im herbatę', effect: { stress: -5, prestige: 10, log: 'Zostałeś honorowym gościem. Dostajesz błogosławieństwo.' } }
+    ]
+  },
+  {
+    id: 'katia_taniec',
+    title: '💃 KATIA MA PRZERWĘ',
+    text: 'Katia włączyła głośnik i tańczy w korytarzu. Halynka próbuje ją zgonić, ale sama zaczyna kiwać się w rytm.',
+    room: 'recepcja',
+    choices: [
+      { label: 'Zatańcz z nimi', effect: { stress: -10, prestige: -5, log: 'Nagranie poszło na firmowy czat. Paula: „...serio?”' } },
+      { label: 'Wyłącz muzykę', effect: { stress: 5, prestige: 5, log: 'Katia robi minę „okej, szefie”. Halynka dziękuje.' } },
+      { label: 'Nagraj i wyślij Marcinowi', effect: { stress: 0, prestige: 0, log: 'Marcin: „Przynajmniej ktoś ma dobry humor. Nie przeszkadzaj.”' } }
+    ]
+  },
+  {
+    id: 'parking_mystery',
+    title: '🚗 TAJEMNICZY SAMOCHÓD',
+    text: 'Na parkingu stoi czarny van bez tablic. Z środka dochodzi dźwięk sitaru i zapach kadzidła. Indusi twierdzą, że to „dostawca.”',
+    room: 'parking',
+    choices: [
+      { label: 'Podejdź i zapukaj', effect: { stress: 15, prestige: 10, log: 'Wyszedł gość w szalu. Okazało się, że to kuzyn jednego z Indusów z lunchboxami.' } },
+      { label: 'Zadzwoń na ochronę zewnętrzną', effect: { stress: 5, prestige: -5, log: 'Marcin: „Po co dzwonisz do zewnętrznych? To nasz parking!”' } },
+      { label: 'Zignoruj (pewnie nic)', effect: { stress: -5, prestige: -15, log: 'Van zniknął. W dyżurce leży notatka: „Dzięki za nienaruszanie. – R.”' } }
+    ]
+  },
+  {
+    id: 'serwer_overheat',
+    title: '🔥 SERWEROWNIA GOTUJE SIĘ',
+    text: 'Serwery wyją. Temperatura 48°C. Indusi postawili w środku czajnik i gotują momosy.',
+    room: 'serwerownia',
+    choices: [
+      { label: 'Wyrzuć czajnik i włącz klimatyzację', effect: { stress: 10, prestige: 15, log: 'Uratowałeś firmę. IT wysłało Ci mema z podziękowaniem.' } },
+      { label: 'Zgłoś Pauli', effect: { stress: 5, prestige: 5, log: 'Paula przyjechała, zobaczyła i westchnęła: „Znowu.”' } },
+      { label: 'Dołącz do gotowania', effect: { stress: -10, prestige: -20, log: 'Momosy pyszne. Serwery padły. Marcin krzyczy przez telefon.' } }
+    ]
+  },
+  {
+    id: 'toaleta_halynka',
+    title: '🚽 KRYZYS W TOALETACH',
+    text: 'Halynka zamknęła się w toalecie i krzyczy, że „duch Indusa” siedzi na sedesie. Katia stoi pod drzwiami z krzyżem z mopa.',
+    room: 'toalety',
+    choices: [
+      { label: 'Uspokój Halynkę', effect: { stress: 5, prestige: 10, log: 'Halynka wyszła. Okazało się, że to było odbicie w lustrze.' } },
+      { label: 'Wezwij egzorcystę (żart)', effect: { stress: -5, prestige: 0, log: 'Katia: „Ja już mam mop-święcony.” Sytuacja się rozwiązała sama.' } },
+      { label: 'Zostaw je', effect: { stress: -10, prestige: -10, log: 'Po godzinie obie sprzątały toalety śpiewając. Lepiej nie pytać.' } }
+    ]
+  },
+  {
+    id: 'marcin_order',
+    title: '📢 POLECENIE OD MARCINA',
+    text: 'Marcin dzwoni: „Słuchaj, ktoś znowu zaparkował na miejscu dla prezesa. Sprawdź to i daj mi znać kto to był. I nie mów Pauli.”',
+    room: 'parking',
+    choices: [
+      { label: 'Sprawdź i zgłoś Marcinowi', effect: { stress: 5, prestige: 10, log: 'To był samochód Pauli. Marcin: „...okej, zapomnij.”' } },
+      { label: 'Powiedz Pauli', effect: { stress: 10, prestige: 5, log: 'Paula: „Marcin znowu. Dzięki, że mówisz.”' } },
+      { label: 'Zignoruj polecenie', effect: { stress: -5, prestige: -15, log: 'Marcin zapamiętał. Na najbliższej odprawie będzie „rozmowa”.' } }
+    ]
+  },
+  {
+    id: 'paula_inspection',
+    title: '👁️ PAULA ROBI OBCHÓD',
+    text: 'Paula nagle pojawia się w dyżurce. „Jak sytuacja? Coś się działo? Dlaczego w kuchni pachnie jak baza wojskowa w Indiach?”',
+    room: 'dyzurka',
+    choices: [
+      { label: 'Powiedz prawdę (z humorem)', effect: { stress: 0, prestige: 15, log: 'Paula uśmiechnęła się. „Przynajmniej nie kłamiesz. Dobrze.”' } },
+      { label: 'Powiedz, że wszystko OK', effect: { stress: 5, prestige: -5, log: 'Paula: „Hmm. Sprawdzę logi kamer.”' } },
+      { label: 'Zaoferuj kawę', effect: { stress: -5, prestige: 10, log: 'Paula wzięła kawę. „Dzięki. Trzymaj tak dalej.”' } }
+    ]
+  },
+  {
+    id: 'indus_meeting',
+    title: '📈 SPOTKANIE INDUŚKIE',
+    text: 'W open space trwa „stand-up”. Trwa już 47 minut. Nikt nie wie o czym. Jeden z nich rysuje na tablicy mandalę.',
+    room: 'open_space',
+    choices: [
+      { label: 'Wejdź i zapytaj o status', effect: { stress: 10, prestige: 5, log: 'Odpowiedzieli: „All good, boss”. Mandala wygląda ładnie.' } },
+      { label: 'Zrób zdjęcie i wyślij na czat ochrony', effect: { stress: -5, prestige: 0, log: 'Cała ochrona umiera ze śmiechu. Marcin też polubił.' } },
+      { label: 'Zostaw ich w spokoju', effect: { stress: -10, prestige: 0, log: 'Spotkanie skończyło się po 1h 12min. Nikt nic nie zapisał.' } }
+    ]
+  },
+  {
+    id: 'magazyn_noise',
+    title: '📦 HAŁAS W MAGAZYNIE',
+    text: 'Z magazynu dochodzą dziwne odgłosy. Brzmi jak ktoś przesuwa kartony i... śpiewa bollywoodzkie hity.',
+    room: 'magazyn',
+    choices: [
+      { label: 'Wejdź sprawdzić', effect: { stress: 10, prestige: 10, log: 'Zastałeś dwóch Indusów budujących fort z kartonów. „Team building”, mówią.' } },
+      { label: 'Zamknij drzwi na klucz', effect: { stress: -5, prestige: -5, log: 'Po 20 minutach ktoś puka. „Please open, we have deadline.”' } },
+      { label: 'Nagraj audio dla Pauli', effect: { stress: 0, prestige: 5, log: 'Paula: „Dodaję do folderu «Indie Moments».”' } }
+    ]
+  },
+  {
+    id: 'coffee_crisis',
+    title: '☕ KRYZYS KAWOY',
+    text: 'W kuchni skończyła się kawa. Indusi są niespokojni. Halynka mówi, że „kawa to nie jej dział”. Atmosfera gęstnieje.',
+    room: 'kuchnia',
+    choices: [
+      { label: 'Idź kupić kawę', effect: { stress: 5, prestige: 15, log: 'Bohater dnia. Indusi Cię noszą na rękach (metaforycznie).' } },
+      { label: 'Zaproponuj herbatę', effect: { stress: 10, prestige: 0, log: 'Odrzucenie. „Tea is not coffee, sir/madam.”' } },
+      { label: 'Zrób z tego raport dla Marcina', effect: { stress: 0, prestige: 5, log: 'Marcin: „Kawa to priorytet. Masz budżet 50 zł.”' } }
+    ]
+  }
+];
+
+// ================== STATE ==================
+let selectedGuard = null;
+let game = {
+  time: 8 * 60, // minutes from 00:00
+  stress: 0,
+  prestige: 50,
+  incidents: 0,
+  currentRoom: 'dyzurka',
+  activeEvent: null,
+  eventQueue: [],
+  log: [],
+  running: false
+};
+
+// ================== UI HELPERS ==================
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function showSelect() {
+  showScreen('select-screen');
+  const grid = document.getElementById('char-grid');
+  grid.innerHTML = '';
+  GUARDS.forEach(g => {
+    const card = document.createElement('div');
+    card.className = 'char-card';
+    card.innerHTML = `
+      <div class="char-avatar">${g.emoji}</div>
+      <div class="char-name">${g.name}</div>
+      <div class="char-role">${g.desc}</div>
+    `;
+    card.onclick = () => {
+      document.querySelectorAll('.char-card').forEach(c => c.classList.remove('selected'));
+      card.classList.add('selected');
+      selectedGuard = g;
+      document.getElementById('start-btn').disabled = false;
+    };
+    grid.appendChild(card);
+  });
+}
+
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+function addLog(text, type = 'system') {
+  const log = document.getElementById('log');
+  const timeStr = formatTime(game.time);
+  const entry = document.createElement('div');
+  entry.className = `log-entry ${type}`;
+  entry.innerHTML = `<span class="log-time">[${timeStr}]</span> ${text}`;
+  log.appendChild(entry);
+  log.scrollTop = log.scrollHeight;
+  game.log.push({ time: timeStr, text, type });
+}
+
+function formatTime(mins) {
+  const h = Math.floor(mins / 60) % 24;
+  const m = mins % 60;
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+}
+
+function updateStats() {
+  document.getElementById('game-time').textContent = formatTime(game.time);
+  document.getElementById('stress').textContent = game.stress + '%';
+  document.getElementById('prestige').textContent = game.prestige;
+  document.getElementById('incidents').textContent = game.incidents;
+
+  const stressEl = document.getElementById('stress').parentElement;
+  stressEl.classList.toggle('danger', game.stress >= 70);
+  stressEl.classList.toggle('warn', game.stress >= 40 && game.stress < 70);
+}
+
+function setStatus(text) {
+  document.getElementById('status-text').textContent = text;
+}
+
+// ================== OFFICE RENDER ==================
+function renderOffice() {
+  const bg = document.getElementById('office-bg');
+  bg.innerHTML = '';
+
+  ROOMS.forEach(r => {
+    const el = document.createElement('div');
+    el.className = 'room' + (r.id === game.currentRoom ? ' active' : '');
+    if (game.activeEvent && game.activeEvent.room === r.id) el.classList.add('has-event');
+    el.style.left = r.x + '%';
+    el.style.top = r.y + '%';
+    el.style.width = r.w + '%';
+    el.style.height = r.h + '%';
+    el.innerHTML = `<div class="icon">${r.icon}</div><div class="name">${r.name}</div>`;
+    el.onclick = () => moveToRoom(r.id);
+    bg.appendChild(el);
+  });
+
+  // NPCs
+  placeNPC('🧑‍💻', 45, 18, 'Indus'); // open space
+  placeNPC('🧑‍💻', 55, 22, 'Indus');
+  placeNPC('🧹', 15, 45, 'Halynka');
+  placeNPC('🧼', 20, 50, 'Katia');
+  placeNPC(selectedGuard.emoji, getRoomCenter(game.currentRoom).x, getRoomCenter(game.currentRoom).y, 'Ty', true);
+}
+
+function placeNPC(emoji, x, y, title, isPlayer = false) {
+  const el = document.createElement('div');
+  el.className = 'npc' + (isPlayer ? ' player' : '');
+  el.style.left = x + '%';
+  el.style.top = y + '%';
+  el.textContent = emoji;
+  el.title = title;
+  document.getElementById('office-bg').appendChild(el);
+}
+
+function getRoomCenter(roomId) {
+  const r = ROOMS.find(x => x.id === roomId);
+  return { x: r.x + r.w / 2 - 2, y: r.y + r.h / 2 - 2 };
+}
+
+function moveToRoom(roomId) {
+  if (game.activeEvent) {
+    toast('Najpierw rozwiąż bieżące wydarzenie!');
+    return;
+  }
+  game.currentRoom = roomId;
+  const room = ROOMS.find(r => r.id === roomId);
+  addLog(`Przechodzisz do: ${room.name}`, 'system');
+  setStatus(`Jesteś w: ${room.name}`);
+  renderOffice();
+  updateActions();
+}
+
+// ================== ACTIONS ==================
+function updateActions() {
+  const container = document.getElementById('actions');
+  container.innerHTML = '';
+
+  if (game.activeEvent) {
+    // choices are in modal
+    return;
+  }
+
+  const basic = [
+    { label: '☕ Weź kawę', fn: () => {
+      game.stress = Math.max(0, game.stress - 8);
+      addLog('Wypiłeś kawę. Trochę lepiej.', 'success');
+      updateStats();
+      toast('Stres -8%');
+    }},
+    { label: '🚶 Obchód', fn: () => {
+      addLog('Robisz szybki obchód biura. Wszystko wygląda... normalnie (jak na to biuro).', 'system');
+      game.prestige = Math.min(100, game.prestige + 2);
+      updateStats();
+    }},
+    { label: '📱 Sprawdź telefon', fn: () => {
+      const msgs = [
+        'Marcin na grupie: „Kto znowu zjadł mojego snickersa?”',
+        'Paula: „Pamiętajcie o raporcie z nocy.”',
+        'Halynka: „Ktoś znowu nie spuścił wody.”',
+        'Nieznany numer: „Czy to ochrona? Bo u nas w open space ktoś lewitował.”'
+      ];
+      addLog(msgs[Math.floor(Math.random() * msgs.length)], 'event');
+    }},
+    { label: '😴 Drzemka (ryzyko)', fn: () => {
+      if (Math.random() > 0.6) {
+        game.stress = Math.max(0, game.stress - 15);
+        addLog('Udało się zdrzemnąć. Nikt nie zauważył.', 'success');
+      } else {
+        game.prestige = Math.max(0, game.prestige - 10);
+        addLog('Paula Cię złapała. „Serio?”', 'danger');
+        toast('Paula Cię widziała!');
+      }
+      updateStats();
+    }}
+  ];
+
+  basic.forEach(a => {
+    const btn = document.createElement('button');
+    btn.className = 'action-btn';
+    btn.textContent = a.label;
+    btn.onclick = a.fn;
+    container.appendChild(btn);
+  });
+}
+
+// ================== EVENTS ==================
+function triggerRandomEvent() {
+  if (game.activeEvent || !game.running) return;
+
+  const available = EVENTS.filter(e => true); // all for now
+  const ev = available[Math.floor(Math.random() * available.length)];
+  game.activeEvent = ev;
+  game.incidents++;
+  updateStats();
+
+  // move player attention
+  document.querySelectorAll('.room').forEach(r => r.classList.remove('has-event'));
+  renderOffice();
+
+  showEventModal(ev);
+}
+
+function showEventModal(ev) {
+  document.getElementById('modal-title').textContent = ev.title;
+  document.getElementById('modal-text').textContent = ev.text;
+  const btns = document.getElementById('modal-btns');
+  btns.innerHTML = '';
+
+  ev.choices.forEach(ch => {
+    const b = document.createElement('button');
+    b.className = 'btn secondary';
+    b.style.fontSize = '13px';
+    b.style.padding = '12px 18px';
+    b.textContent = ch.label;
+    b.onclick = () => resolveEvent(ch);
+    btns.appendChild(b);
+  });
+
+  document.getElementById('modal').classList.add('show');
+  addLog(`WYDARZENIE: ${ev.title}`, 'event');
+}
+
+function resolveEvent(choice) {
+  document.getElementById('modal').classList.remove('show');
+
+  const eff = choice.effect;
+  game.stress = Math.max(0, Math.min(100, game.stress + (eff.stress || 0)));
+  game.prestige = Math.max(0, Math.min(100, game.prestige + (eff.prestige || 0)));
+
+  addLog(eff.log, eff.prestige >= 0 ? 'success' : 'danger');
+  if (eff.stress < 0) toast(`Stres ${eff.stress}%`);
+  if (eff.prestige > 0) toast(`Prestiż +${eff.prestige}`);
+  if (eff.prestige < 0) toast(`Prestiż ${eff.prestige}`);
+
+  game.activeEvent = null;
+  updateStats();
+  renderOffice();
+  updateActions();
+  setStatus('Wydarzenie rozwiązane. Czekaj na kolejne...');
+
+  // check end conditions
+  if (game.stress >= 100) endGame(false, 'Stres Cię wykończył. Ochrona potrzebuje przerwy.');
+  if (game.prestige <= 0) endGame(false, 'Prestiż spadł do zera. Marcin Cię zwolnił.');
+  if (game.time >= 20 * 60) endGame(true, 'Koniec zmiany! Udało Ci się przetrwać dzień.');
+}
+
+function reportToBoss() {
+  if (game.activeEvent) {
+    toast('Najpierw rozwiąż wydarzenie!');
+    return;
+  }
+  const replies = [
+    'Marcin: „Dobra, notuję. Nie zawracaj mi głowy bez potrzeby.”',
+    'Marcin: „A Paula wie? Bo jak nie, to nie mów.”',
+    'Marcin: „Świetnie. Jak coś poważnego – dzwoń. Jak curry – nie.”',
+    'Marcin: „Jestem na spotkaniu. Napisz SMS-a.”'
+  ];
+  addLog(replies[Math.floor(Math.random() * replies.length)], 'boss');
+  game.prestige = Math.min(100, game.prestige + 1);
+  updateStats();
+}
+
+function callPaula() {
+  if (game.activeEvent) {
+    toast('Najpierw rozwiąż wydarzenie!');
+    return;
+  }
+  const replies = [
+    'Paula: „Dzięki za info. Trzymaj rękę na pulsie.”',
+    'Paula: „Halynka znowu? Klasycznie.”',
+    'Paula: „Jak Indusi coś kombinują – daj znać od razu.”',
+    'Paula: „Jesteś OK? Pamiętaj o przerwie.”'
+  ];
+  addLog(replies[Math.floor(Math.random() * replies.length)], 'boss');
+  game.stress = Math.max(0, game.stress - 3);
+  updateStats();
+  toast('Paula Cię wysłuchała. Stres -3%');
+}
+
+// ================== GAME LOOP ==================
+function startGame() {
+  if (!selectedGuard) return;
+  game = {
+    time: 8 * 60,
+    stress: 10,
+    prestige: 50,
+    incidents: 0,
+    currentRoom: 'dyzurka',
+    activeEvent: null,
+    eventQueue: [],
+    log: [],
+    running: true
+  };
+
+  document.getElementById('player-name').textContent = selectedGuard.name;
+  showScreen('game-screen');
+  document.getElementById('log').innerHTML = '';
+  addLog(`Służba rozpoczęta. Witaj, ${selectedGuard.name}!`, 'system');
+  addLog('Szef ochrony: MARCIN | Zastępca: PAULA', 'boss');
+  addLog('W biurze: Indusi, Halynka i Katia. Powodzenia.', 'system');
+  setStatus('Jesteś w dyżurce. Czekaj na wydarzenia lub zrób obchód.');
+  renderOffice();
+  updateActions();
+  updateStats();
+
+  // game tick every 4 seconds = 1 minute in game
+  window.gameInterval = setInterval(gameTick, 4000);
+}
+
+function gameTick() {
+  if (!game.running) return;
+  game.time += 1;
+  updateStats();
+
+  // random event chance
+  if (!game.activeEvent && Math.random() < 0.18) {
+    triggerRandomEvent();
+  }
+
+  // passive stress
+  if (Math.random() < 0.1) {
+    game.stress = Math.min(100, game.stress + 1);
+    updateStats();
+  }
+
+  // end of day
+  if (game.time >= 20 * 60) {
+    endGame(true, 'Koniec zmiany! Udało Ci się przetrwać dzień w tym cyrku.');
+  }
+}
+
+function endGame(won, msg) {
+  game.running = false;
+  clearInterval(window.gameInterval);
+
+  document.getElementById('modal-title').textContent = won ? '🎉 KONIEC ZMIANY' : '💀 KONIEC GRY';
+  document.getElementById('modal-text').textContent = msg + `\n\nPrestiż: ${game.prestige} | Incydenty: ${game.incidents} | Stres końcowy: ${game.stress}%`;
+  const btns = document.getElementById('modal-btns');
+  btns.innerHTML = '';
+  const b = document.createElement('button');
+  b.className = 'btn';
+  b.textContent = 'ZAGRAJ PONOWNIE';
+  b.onclick = () => {
+    document.getElementById('modal').classList.remove('show');
+    showSelect();
+  };
+  btns.appendChild(b);
+  document.getElementById('modal').classList.add('show');
+}
+
+// init
+</script>
+</body>
+</html>
