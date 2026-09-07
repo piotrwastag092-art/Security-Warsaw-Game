@@ -6,7 +6,6 @@
 <title>OCHRONA BIURA – Symulator</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
-
   :root {
     --bg: #0d1117;
     --panel: #161b22;
@@ -18,9 +17,7 @@
     --text: #e6edf3;
     --muted: #8b949e;
   }
-
   * { box-sizing: border-box; margin: 0; padding: 0; }
-
   body {
     background: var(--bg);
     color: var(--text);
@@ -29,11 +26,9 @@
     min-height: 100vh;
     overflow-x: hidden;
   }
-
   /* ===== SCREENS ===== */
   .screen { display: none; min-height: 100vh; padding: 20px; }
   .screen.active { display: flex; flex-direction: column; align-items: center; }
-
   /* ===== TITLE ===== */
   #title-screen {
     justify-content: center;
@@ -75,7 +70,6 @@
     background: linear-gradient(180deg, #da3633, #b62324);
     border-color: var(--danger);
   }
-
   /* ===== CHARACTER SELECT ===== */
   #select-screen h2 {
     font-family: 'Press Start 2P', cursive;
@@ -122,7 +116,6 @@
     margin-bottom: 6px;
   }
   .char-role { color: var(--muted); font-size: 18px; }
-
   /* ===== GAME UI ===== */
   #game-screen {
     padding: 0;
@@ -149,14 +142,12 @@
   .stat .value { color: var(--accent); font-weight: bold; }
   .stat.danger .value { color: var(--danger); }
   .stat.warn .value { color: var(--warn); }
-
   .main-area {
     display: flex;
     flex: 1;
     height: calc(100vh - 120px);
     width: 100%;
   }
-
   /* LEFT: MAP / OFFICE */
   .office-view {
     flex: 1.4;
@@ -189,12 +180,10 @@
   .room .icon { font-size: 28px; margin-bottom: 4px; }
   .room .name { font-size: 14px; color: var(--muted); text-align: center; }
   .room.has-event { animation: pulse 1.2s infinite; border-color: var(--danger); }
-
   @keyframes pulse {
     0%, 100% { box-shadow: 0 0 8px #f8514988; }
     50% { box-shadow: 0 0 20px #f85149; }
   }
-
   /* RIGHT: LOG + ACTIONS */
   .side-panel {
     flex: 1;
@@ -222,8 +211,9 @@
   .log-entry.success { border-color: var(--success); }
   .log-entry.danger { border-color: var(--danger); }
   .log-entry.boss { border-color: #a371f7; }
+  .log-entry.michal { border-color: #f0883e; }
+  .log-entry.janek { border-color: #79c0ff; }
   .log-time { color: var(--muted); font-size: 14px; margin-right: 6px; }
-
   .action-panel {
     border-top: 3px solid var(--border);
     padding: 12px;
@@ -259,7 +249,6 @@
     opacity: 0.4;
     cursor: not-allowed;
   }
-
   /* BOTTOM STATUS */
   .bottom-bar {
     background: var(--panel);
@@ -271,7 +260,6 @@
     width: 100%;
     font-size: 18px;
   }
-
   /* MODAL */
   .modal-overlay {
     position: fixed; inset: 0;
@@ -299,7 +287,6 @@
   }
   .modal p { margin-bottom: 20px; line-height: 1.5; font-size: 20px; }
   .modal-btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
-
   /* CHARACTER SPRITES (emoji based) */
   .npc {
     position: absolute;
@@ -310,7 +297,6 @@
     cursor: default;
   }
   .npc.player { z-index: 10; font-size: 36px; filter: drop-shadow(0 0 8px #58a6ff); }
-
   /* TOAST */
   .toast {
     position: fixed;
@@ -327,7 +313,22 @@
     max-width: 320px;
   }
   .toast.show { opacity: 1; transform: translateX(0); }
-
+  /* MUSIC TOGGLE */
+  .music-btn {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    z-index: 50;
+    background: #21262d;
+    border: 2px solid var(--border);
+    color: var(--text);
+    font-family: 'VT323', monospace;
+    font-size: 18px;
+    padding: 8px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  .music-btn:hover { border-color: var(--accent); }
   /* RESPONSIVE */
   @media (max-width: 800px) {
     .main-area { flex-direction: column; height: auto; }
@@ -337,7 +338,6 @@
 </style>
 </head>
 <body>
-
 <!-- TITLE -->
 <div id="title-screen" class="screen active">
   <h1>OCHRONA<br>BIURA</h1>
@@ -345,17 +345,16 @@
   <button class="btn" onclick="showSelect()">START GRY</button>
   <p style="margin-top:40px;color:var(--muted);font-size:18px;">
     Szef: MARCIN • Zastępca: PAULA<br>
-    Sprzątanie: Halynka + Katia • Biuro: Indusi
+    Sprzątanie: Halynka + Katia • Biuro: Indusi<br>
+    Technik: Michał (gry) • STRABAG: Janek
   </p>
 </div>
-
 <!-- SELECT -->
 <div id="select-screen" class="screen">
   <h2>Wybierz swojego ochroniarza</h2>
   <div class="char-grid" id="char-grid"></div>
   <button class="btn" id="start-btn" disabled onclick="startGame()">ROZPOCZNIJ SŁUŻBĘ</button>
 </div>
-
 <!-- GAME -->
 <div id="game-screen" class="screen">
   <div class="top-bar">
@@ -365,14 +364,12 @@
     <div class="stat"><span class="label">PRESTIŻ:</span> <span class="value" id="prestige">50</span></div>
     <div class="stat danger"><span class="label">INCIDENTY:</span> <span class="value" id="incidents">0</span></div>
   </div>
-
   <div class="main-area">
     <div class="office-view">
       <div class="office-bg" id="office-bg">
         <!-- rooms injected by JS -->
       </div>
     </div>
-
     <div class="side-panel">
       <div class="log-area" id="log"></div>
       <div class="action-panel">
@@ -381,7 +378,6 @@
       </div>
     </div>
   </div>
-
   <div class="bottom-bar">
     <div id="status-text">Jesteś na posterunku. Czekaj na wydarzenia...</div>
     <div>
@@ -390,7 +386,6 @@
     </div>
   </div>
 </div>
-
 <!-- MODAL -->
 <div class="modal-overlay" id="modal">
   <div class="modal">
@@ -399,18 +394,20 @@
     <div class="modal-btns" id="modal-btns"></div>
   </div>
 </div>
-
 <div class="toast" id="toast"></div>
-
+<button class="music-btn" id="music-btn" onclick="toggleMusic()">🔊 Muzyka</button>
+<audio id="bg-music" loop preload="auto">
+  <source src="https://www.orangefreesounds.com/wp-content/uploads/2015/10/8-bit-music-loop.mp3" type="audio/mpeg">
+</audio>
 <script>
 // ================== DATA ==================
 const GUARDS = [
-  { id: 'piotrek', name: 'PIOTREK', emoji: '👮‍♂️', desc: 'Weteran. Lubi kawę i narzekać.' },
-  { id: 'artur', name: 'ARTUR', emoji: '🕵️', desc: 'Zawsze coś podejrzewa.' },
-  { id: 'macius', name: 'MACIUŚ', emoji: '🥋', desc: 'Ćwiczy judo w dyżurce.' },
-  { id: 'lukasz', name: 'ŁUKASZ', emoji: '👓', desc: 'Czyta regulamin na głos.' },
-  { id: 'milena', name: 'MILENA', emoji: '👩‍✈️', desc: 'Najbardziej ogarnięta z ekipy.' },
-  { id: 'szymon', name: 'SZYMON', emoji: '🫡', desc: 'Młody, ambitny, trochę naiwny.' }
+  { id: 'piotrek', name: 'PIOTREK', emoji: '👮‍♂️', desc: 'Młody, ambitny, trochę naiwny. Trenował karate. Zabawny, czasem głupi, zawsze z żartem.' },
+  { id: 'artur', name: 'ARTUR', emoji: '🕵️', desc: 'Wyszkołił wszystkich nowych. Pracuje według procedur, gadatliwy i zawsze ma śmieszne uwagi.' },
+  { id: 'macius', name: 'MACIUŚ', emoji: '🥋', desc: 'Ćwiczy judo... w Apartamencie Halynki. Nie pytaj dlaczego.' },
+  { id: 'lukasz', name: 'ŁUKASZ', emoji: '👓', desc: 'Skrupulatny. Wszystko według procedur. Regulamin to jego Biblia.' },
+  { id: 'milena', name: 'MILENA', emoji: '👩‍✈️', desc: 'Uczy się pracy w nowym zespole. Najbardziej ogarnięta z nowych.' },
+  { id: 'szymon', name: 'SZYMON', emoji: '🫡', desc: 'Młody, ambitny, z poczuciem humoru. Zawsze walnie dobrym sucharem.' }
 ];
 
 const ROOMS = [
@@ -425,6 +422,7 @@ const ROOMS = [
 ];
 
 const EVENTS = [
+  // === ORYGINALNE + ROZSZERZONE ===
   {
     id: 'indus_curry',
     title: '🚨 ALARM KUCHENNY',
@@ -556,13 +554,236 @@ const EVENTS = [
       { label: 'Zaproponuj herbatę', effect: { stress: 10, prestige: 0, log: 'Odrzucenie. „Tea is not coffee, sir/madam.”' } },
       { label: 'Zrób z tego raport dla Marcina', effect: { stress: 0, prestige: 5, log: 'Marcin: „Kawa to priorytet. Masz budżet 50 zł.”' } }
     ]
+  },
+
+  // === NOWE EVENTY – MICHAŁ + JANEK + ABSURD + POWAŻNE ===
+  {
+    id: 'michal_games',
+    title: '🎮 MICHAŁ ZNOWU GRA',
+    text: 'Michał siedzi w serwerowni z laptopem i gra w jakąś grę. Na ekranie widać ranking. Nagle wykrzykuje: „No weź, bo ten boss ma cheaty!” Serwery mruczą w tle.',
+    room: 'serwerownia',
+    choices: [
+      { label: 'Zapytaj o ranking', effect: { stress: -5, prestige: 0, log: 'Michał: „Jestem top 3 na serwerze. Jakby ktoś pytał – to praca.”' } },
+      { label: 'Przypomnij o obowiązkach', effect: { stress: 5, prestige: 5, log: 'Michał westchnął: „Dobra, dobra... zaraz zgłoszę tę usterkę do STRABAG-u.”' } },
+      { label: 'Zrób mu herbatę i zostaw', effect: { stress: -10, prestige: 5, log: 'Michał: „Szefie, jesteś legenda. Jak padnie klimatyzacja – wiem do kogo dzwonić.”' } }
+    ]
+  },
+  {
+    id: 'michal_strabag',
+    title: '🔧 USTERKA – MICHAŁ WZYWA STRABAG',
+    text: 'Michał dzwoni do Janka ze STRABAG-u: „No słuchaj, znowu coś nie gra z klimatyzacją. Albo z prądem. Albo z jednym i drugim. Przyjedź, bo ja już nie ogarniam.”',
+    room: 'serwerownia',
+    choices: [
+      { label: 'Pomóż opisać usterkę', effect: { stress: 5, prestige: 10, log: 'Janek przyjechał, pokręcił głową i powiedział: „Panowie... jak wy tu pracujecie?”' } },
+      { label: 'Zostaw Michała z tym', effect: { stress: -5, prestige: -5, log: 'Janek przyjechał i usłyszał pół rozmowy o grze. Wyraz twarzy: czysty szok kulturowy.' } },
+      { label: 'Nagraj rozmowę dla Pauli', effect: { stress: 0, prestige: 5, log: 'Paula: „Michał znowu. Folder «Techniczne cuda» rośnie.”' } }
+    ]
+  },
+  {
+    id: 'janek_shock',
+    title: '😮 JANEK NIE DOWIERZA',
+    text: 'Janek ze STRABAG-u stoi w dyżurce i słucha rozmowy Michała z Tobą. Po chwili mówi cicho: „Ja... ja naprawdę nie wiem, jak wy tu funkcjonujecie.”',
+    room: 'dyzurka',
+    choices: [
+      { label: 'Wyjaśnij kulturalnie', effect: { stress: 0, prestige: 10, log: 'Janek: „Dziękuję. Przynajmniej ktoś mówi normalnie.”' } },
+      { label: 'Zrób żart (ostrożnie)', effect: { stress: 5, prestige: 0, log: 'Janek uśmiechnął się lekko. „Panowie... naprawdę.”' } },
+      { label: 'Zaproponuj kawę', effect: { stress: -5, prestige: 5, log: 'Janek: „Dziękuję. Potrzebowałem tego.”' } }
+    ]
+  },
+  {
+    id: 'piotrek_michal_duo',
+    title: '🤝 PIOTREK + MICHAŁ = CHAOS',
+    text: 'Michał i Piotrek stoją przy recepcji i wymieniają się sucharami. Halynka przechodzi obok i krzyczy „Ja nie będę tego słuchać!” Katia już nagrywa.',
+    room: 'recepcja',
+    choices: [
+      { label: 'Dołącz do żartów', effect: { stress: -15, prestige: -5, log: 'Cała trójka wybucha śmiechem. Paula później: „...serio, chłopaki?”' } },
+      { label: 'Przerwij i wróć do pracy', effect: { stress: 5, prestige: 10, log: 'Michał: „No dobra, wracamy do grania... znaczy pracy.”' } },
+      { label: 'Nagraj i wyślij Marcinowi', effect: { stress: 0, prestige: 0, log: 'Marcin: „Przynajmniej nie ma pożaru. Na razie.”' } }
+    ]
+  },
+  {
+    id: 'macius_judo_halynka',
+    title: '🥋 MACIUŚ ĆWICZY W APARTAMENCIE',
+    text: 'Z Apartamentu Halynki dochodzą odgłosy upadków i „OSU!” Halynka krzyczy: „Maciuś! Ja tu sprzątam, a Ty robisz judo na mojej kanapie!”',
+    room: 'dyzurka',
+    choices: [
+      { label: 'Idź sprawdzić', effect: { stress: 10, prestige: 5, log: 'Maciuś: „Trening musi być. Halynka mi pozwala... czasem.”' } },
+      { label: 'Zrób zdjęcie dla Pauli', effect: { stress: 0, prestige: 5, log: 'Paula: „Dodaję do folderu «Maciuś Moments».”' } },
+      { label: 'Zostaw ich', effect: { stress: -5, prestige: -5, log: 'Po 20 minutach Halynka wyszła z herbatą. Maciuś leżał na podłodze zadowolony.' } }
+    ]
+  },
+  {
+    id: 'lukasz_procedury',
+    title: '📋 ŁUKASZ I REGULAMIN',
+    text: 'Łukasz stoi z wydrukowanym regulaminem i głośno czyta paragraf o „zakazie gotowania w serwerowni”. Indusi słuchają z kamienną twarzą.',
+    room: 'serwerownia',
+    choices: [
+      { label: 'Wesprzyj go', effect: { stress: 5, prestige: 10, log: 'Łukasz: „Procedury istnieją z powodu. Dziękuję.”' } },
+      { label: 'Powiedz, że to przesada', effect: { stress: -5, prestige: -5, log: 'Łukasz spojrzał jak na zdrajcę. „Regulamin nie kłamie.”' } },
+      { label: 'Zrób z tego mema', effect: { stress: 0, prestige: 0, log: 'Cała ochrona umiera ze śmiechu. Łukasz nie rozumie dlaczego.' } }
+    ]
+  },
+  {
+    id: 'milena_new_team',
+    title: '🆕 MILENA UCZY SIĘ ZESPOŁU',
+    text: 'Milena stoi z notesem i zapisuje: „Halynka – woda. Katia – taniec. Michał – gry. Indusi – curry.” Patrzy na Ciebie: „To normalne?”',
+    room: 'dyzurka',
+    choices: [
+      { label: 'Powiedz prawdę z humorem', effect: { stress: -5, prestige: 10, log: 'Milena: „Okej... to będzie ciekawa nauka.”' } },
+      { label: 'Powiedz, że wszystko według procedur', effect: { stress: 5, prestige: 5, log: 'Milena kiwa głową. „Zapisuję. Dziękuję.”' } },
+      { label: 'Zaproponuj kawę i opowiedz historię', effect: { stress: -10, prestige: 5, log: 'Milena śmieje się. „To biuro jest... wyjątkowe.”' } }
+    ]
+  },
+  {
+    id: 'artur_gadula',
+    title: '🗣️ ARTUR OPOWIADA HISTORIĘ',
+    text: 'Artur zatrzymuje Cię przy recepcji i zaczyna: „A pamiętasz jak ten nowy kiedyś...?” Historia trwa 12 minut. Nikt nie wie, o co chodziło na początku.',
+    room: 'recepcja',
+    choices: [
+      { label: 'Słuchaj do końca', effect: { stress: 10, prestige: 5, log: 'Artur: „No i właśnie o to chodziło! Procedury ratują życie.”' } },
+      { label: 'Delikatnie przerwij', effect: { stress: 0, prestige: 0, log: 'Artur: „Dobra, dobra. Ale kiedyś dokończę.”' } },
+      { label: 'Dołącz własnym sucharem', effect: { stress: -10, prestige: 5, log: 'Artur wybuchnął śmiechem. „Ty to masz poczucie humoru!”' } }
+    ]
+  },
+  {
+    id: 'szymon_suchar',
+    title: '🃏 SZYMON WALNĄŁ SUCHARA',
+    text: 'Szymon wchodzi do dyżurki i rzuca: „Dlaczego ochroniarz nigdy nie gubi kluczy? Bo zawsze ma je na oku!” Cisza. Potem Halynka się zaśmiała.',
+    room: 'dyzurka',
+    choices: [
+      { label: 'Zaśmiej się', effect: { stress: -10, prestige: 0, log: 'Szymon: „Wiedziałem, że ktoś złapie. Dzień zrobiony.”' } },
+      { label: 'Powiedz, że to słabe', effect: { stress: 5, prestige: -5, log: 'Szymon: „Ej, to klasyk! Następnym razem będzie lepiej.”' } },
+      { label: 'Odpowiedz własnym sucharem', effect: { stress: -15, prestige: 5, log: 'Oboje padliście ze śmiechu. Paula później: „Co wy tam robicie?”' } }
+    ]
+  },
+  {
+    id: 'serious_fire_alarm',
+    title: '🔥 POWAŻNY ALARM POŻAROWY',
+    text: 'Prawdziwy alarm pożarowy. Dym w kuchni. Indusi uciekają z patelniami. Halynka krzyczy, że to nie jej wina. Paula dzwoni.',
+    room: 'kuchnia',
+    choices: [
+      { label: 'Ewakuuj ludzi i zgłoś', effect: { stress: 15, prestige: 20, log: 'Zrobiłeś wszystko według procedur. Paula: „Dobra robota. Naprawdę.”' } },
+      { label: 'Spróbuj gasić sam', effect: { stress: 20, prestige: 5, log: 'Udało się, ale masz oparzenia. Marcin: „Następnym razem wzywaj straż.”' } },
+      { label: 'Czekaj na straż', effect: { stress: 10, prestige: 10, log: 'Straż przyjechała. Okazało się, że to był tylko dym z curry. Ale dobrze zareagowałeś.' } }
+    ]
+  },
+  {
+    id: 'serious_theft',
+    title: '🚨 PODEJRZENIE KRADZIEŻY',
+    text: 'Ktoś zgłasza, że zniknął firmowy laptop z open space. Kamery pokazują tylko cień. Paula i Marcin są na miejscu.',
+    room: 'open_space',
+    choices: [
+      { label: 'Zabezpiecz miejsce i zbierz zeznania', effect: { stress: 15, prestige: 20, log: 'Profesjonalna robota. Laptop znalazł się później w szafce Indusa – „pomyłka”.' } },
+      { label: 'Przeszukaj wszystkich', effect: { stress: 20, prestige: -5, log: 'Marcin: „Przesada. Ale laptop się znalazł.”' } },
+      { label: 'Zostaw to policji', effect: { stress: 5, prestige: 5, log: 'Policja przyjechała. Okazało się, że to był żart jednego z Indusów. Nikt nie jest zadowolony.' } }
+    ]
+  },
+  {
+    id: 'michal_ambiguous',
+    title: '😏 MICHAŁ I DWUZNACZNY DOCIENEK',
+    text: 'Michał patrzy na Ciebie i mówi: „Słuchaj... jakbyś potrzebował kogoś, kto ogarnie usterkę w nocy... to wiesz gdzie mnie znaleźć. Tylko nie mów Jankowi.”',
+    room: 'serwerownia',
+    choices: [
+      { label: 'Zaśmiej się i zmień temat', effect: { stress: -5, prestige: 0, log: 'Michał: „No właśnie. Gra czeka.”' } },
+      { label: 'Powiedz, że wolisz procedury', effect: { stress: 0, prestige: 5, log: 'Michał: „Okej, okej. Ale jak padnie prąd – dzwonię do STRABAG-u.”' } },
+      { label: 'Zrób własny dwuznaczny żart', effect: { stress: -10, prestige: 0, log: 'Oboje się uśmiechacie. Nikt nie wie o co chodziło. I dobrze.' } }
+    ]
+  },
+  {
+    id: 'janek_vs_michal',
+    title: '🔧 JANEK VS MICHAŁ',
+    text: 'Janek przyszedł naprawić klimatyzację. Michał tłumaczy: „No panie Janku, to jak w grze – boss fight z wentylacją.” Janek milczy przez 10 sekund.',
+    room: 'serwerownia',
+    choices: [
+      { label: 'Pomóż tłumaczyć normalnie', effect: { stress: 5, prestige: 10, log: 'Janek: „Dziękuję. Przynajmniej ktoś mówi po ludzku.”' } },
+      { label: 'Zostaw ich samych', effect: { stress: -5, prestige: -5, log: 'Po 15 minutach Janek wyszedł z miną człowieka, który zobaczył za dużo.' } },
+      { label: 'Zrób kawę dla obu', effect: { stress: -5, prestige: 5, log: 'Janek: „Dziękuję. Potrzebowałem.” Michał: „Szefie, jesteś gold.”' } }
+    ]
+  },
+  {
+    id: 'absurd_elevator',
+    title: '🛗 WINDA NIE DZIAŁA',
+    text: 'Winda utknęła między piętrami. W środku: dwóch Indusów, Halynka i... Michał z laptopem. Michał krzyczy: „Mam jeszcze 3 życia!”',
+    room: 'recepcja',
+    choices: [
+      { label: 'Wezwij STRABAG (Janek)', effect: { stress: 10, prestige: 15, log: 'Janek przyjechał, otworzył drzwi i powiedział tylko: „...znowu.”' } },
+      { label: 'Próbuj uspokoić przez interkom', effect: { stress: 5, prestige: 5, log: 'Halynka: „Ja tu umrę z głodu!” Michał: „Ja mam jeszcze chipsy.”' } },
+      { label: 'Nagraj i wyślij na czat', effect: { stress: -5, prestige: 0, log: 'Cała ochrona umiera ze śmiechu. Paula: „Folder «Winda Moments» utworzony.”' } }
+    ]
+  },
+  {
+    id: 'absurd_printer',
+    title: '🖨️ DRUKARKA OPĘTANA',
+    text: 'Drukarka w open space drukuje non-stop mandale i memy z kotami. Indusi twierdzą, że to „duch drukarki”. Michał: „To bug, nie duch.”',
+    room: 'open_space',
+    choices: [
+      { label: 'Wyłącz i zrestartuj', effect: { stress: 5, prestige: 10, log: 'Udało się. Indusi: „Thank you, security spirit.”' } },
+      { label: 'Zostaw Michałowi', effect: { stress: -5, prestige: -5, log: 'Michał: „Zgłoszę do STRABAG-u. To nie mój dział.”' } },
+      { label: 'Dołącz do teorii ducha', effect: { stress: -10, prestige: 0, log: 'Wszyscy się śmieją. Drukarka nagle przestaje. „Widzicie?!”' } }
+    ]
+  },
+  {
+    id: 'serious_access',
+    title: '🔑 NIEUPRAWNIONY DOSTĘP',
+    text: 'System kontroli dostępu pokazuje wejście kogoś nieznanego o 3 w nocy. Kamery są czarne. Paula i Marcin czekają na raport.',
+    room: 'dyzurka',
+    choices: [
+      { label: 'Sprawdź logi i zgłoś formalnie', effect: { stress: 15, prestige: 20, log: 'Okazało się, że to był serwis STRABAG. Janek potwierdził. Profesjonalna robota.' } },
+      { label: 'Zrób obchód teraz', effect: { stress: 10, prestige: 10, log: 'Nic nie znalazłeś. Ale raport jest kompletny.' } },
+      { label: 'Zignoruj (pewnie błąd)', effect: { stress: -5, prestige: -15, log: 'Marcin: „Następnym razem nie ignoruj. To poważna sprawa.”' } }
+    ]
+  },
+  {
+    id: 'halynka_apartment_judo',
+    title: '🏠 APARTAMENT HALYNKI – TRENING',
+    text: 'Halynka otwiera drzwi do swojego apartamentu. W środku Maciuś robi rzuty na materacu. „On mi pomaga z energią!” – tłumaczy.',
+    room: 'dyzurka',
+    choices: [
+      { label: 'Wejdź i pogadaj', effect: { stress: 5, prestige: 5, log: 'Maciuś: „Judo to życie. Halynka rozumie.” Halynka kiwa głową.' } },
+      { label: 'Zostaw ich w spokoju', effect: { stress: -5, prestige: 0, log: 'Po godzinie oboje wyszli zadowoleni. Nikt nie pyta.' } },
+      { label: 'Zrób zdjęcie (dyskretnie)', effect: { stress: 0, prestige: 5, log: 'Paula: „Maciuś znowu. Folder aktualizowany.”' } }
+    ]
+  },
+  {
+    id: 'indus_birthday',
+    title: '🎂 URODZINY INDUSA',
+    text: 'W open space stoi tort w kształcie mandali. Indusi śpiewają. Michał przyszedł z grą multiplayer. Halynka przyniosła herbatę „na siłę”.',
+    room: 'open_space',
+    choices: [
+      { label: 'Dołącz do świętowania', effect: { stress: -15, prestige: 5, log: 'Dostałeś kawałek tortu i błogosławieństwo. Dzień udany.' } },
+      { label: 'Zrób zdjęcie i wyślij Pauli', effect: { stress: 0, prestige: 5, log: 'Paula: „Ładnie. Przynajmniej nie ma pożaru.”' } },
+      { label: 'Wróć do dyżurki', effect: { stress: 5, prestige: 0, log: 'Słychać śpiew jeszcze przez godzinę. Spokój względny.' } }
+    ]
+  },
+  {
+    id: 'paula_night_check',
+    title: '🌙 PAULA W NOCY',
+    text: 'Paula dzwoni o 22:00: „Jak sytuacja? Michał jeszcze gra? Halynka już poszła? A Ty nie drzemiesz?”',
+    room: 'dyzurka',
+    choices: [
+      { label: 'Powiedz prawdę z humorem', effect: { stress: 0, prestige: 15, log: 'Paula zaśmiała się. „Trzymaj tak. Dobranoc.”' } },
+      { label: 'Powiedz, że wszystko według procedur', effect: { stress: 5, prestige: 5, log: 'Paula: „Dobrze. Jutro raport.”' } },
+      { label: 'Zaoferuj, że zrobisz obchód', effect: { stress: 5, prestige: 10, log: 'Paula: „Dzięki. Wiem, że mogę na Ciebie liczyć.”' } }
+    ]
+  },
+  {
+    id: 'marcin_secret',
+    title: '🤫 MARCIN MA SEKRET',
+    text: 'Marcin dzwoni szeptem: „Słuchaj... jakby ktoś pytał, to ja nie byłem w kuchni o 3 w nocy. I nie jedliśmy z Indusami. Zrozumiano?”',
+    room: 'dyzurka',
+    choices: [
+      { label: 'Potwierdź i zapomnij', effect: { stress: 0, prestige: 10, log: 'Marcin: „Dobry człowiek. Dzięki.”' } },
+      { label: 'Powiedz Pauli', effect: { stress: 10, prestige: 5, log: 'Paula: „Wiem. Już wiem. Dzięki za lojalność wobec prawdy.”' } },
+      { label: 'Zrób żart', effect: { stress: -5, prestige: 0, log: 'Marcin: „...serio? Dobra, zapomnij że dzwoniłem.”' } }
+    ]
   }
 ];
 
 // ================== STATE ==================
 let selectedGuard = null;
+let musicOn = true;
 let game = {
-  time: 8 * 60, // minutes from 00:00
+  time: 8 * 60,
   stress: 0,
   prestige: 50,
   incidents: 0,
@@ -578,7 +799,6 @@ function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
 }
-
 function showSelect() {
   showScreen('select-screen');
   const grid = document.getElementById('char-grid');
@@ -600,14 +820,12 @@ function showSelect() {
     grid.appendChild(card);
   });
 }
-
 function toast(msg) {
   const t = document.getElementById('toast');
   t.textContent = msg;
   t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 3000);
 }
-
 function addLog(text, type = 'system') {
   const log = document.getElementById('log');
   const timeStr = formatTime(game.time);
@@ -618,33 +836,48 @@ function addLog(text, type = 'system') {
   log.scrollTop = log.scrollHeight;
   game.log.push({ time: timeStr, text, type });
 }
-
 function formatTime(mins) {
   const h = Math.floor(mins / 60) % 24;
   const m = mins % 60;
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
 }
-
 function updateStats() {
   document.getElementById('game-time').textContent = formatTime(game.time);
   document.getElementById('stress').textContent = game.stress + '%';
   document.getElementById('prestige').textContent = game.prestige;
   document.getElementById('incidents').textContent = game.incidents;
-
   const stressEl = document.getElementById('stress').parentElement;
   stressEl.classList.toggle('danger', game.stress >= 70);
   stressEl.classList.toggle('warn', game.stress >= 40 && game.stress < 70);
 }
-
 function setStatus(text) {
   document.getElementById('status-text').textContent = text;
+}
+
+// ================== MUSIC ==================
+function toggleMusic() {
+  const audio = document.getElementById('bg-music');
+  const btn = document.getElementById('music-btn');
+  if (musicOn) {
+    audio.pause();
+    btn.textContent = '🔇 Muzyka';
+    musicOn = false;
+  } else {
+    audio.play().catch(() => {});
+    btn.textContent = '🔊 Muzyka';
+    musicOn = true;
+  }
+}
+function startMusic() {
+  const audio = document.getElementById('bg-music');
+  audio.volume = 0.35;
+  audio.play().catch(() => {});
 }
 
 // ================== OFFICE RENDER ==================
 function renderOffice() {
   const bg = document.getElementById('office-bg');
   bg.innerHTML = '';
-
   ROOMS.forEach(r => {
     const el = document.createElement('div');
     el.className = 'room' + (r.id === game.currentRoom ? ' active' : '');
@@ -657,15 +890,15 @@ function renderOffice() {
     el.onclick = () => moveToRoom(r.id);
     bg.appendChild(el);
   });
-
   // NPCs
-  placeNPC('🧑‍💻', 45, 18, 'Indus'); // open space
+  placeNPC('🧑‍💻', 45, 18, 'Indus');
   placeNPC('🧑‍💻', 55, 22, 'Indus');
   placeNPC('🧹', 15, 45, 'Halynka');
   placeNPC('🧼', 20, 50, 'Katia');
+  placeNPC('🎮', 40, 50, 'Michał'); // tech guy
+  placeNPC('🔧', 65, 55, 'Janek'); // STRABAG
   placeNPC(selectedGuard.emoji, getRoomCenter(game.currentRoom).x, getRoomCenter(game.currentRoom).y, 'Ty', true);
 }
-
 function placeNPC(emoji, x, y, title, isPlayer = false) {
   const el = document.createElement('div');
   el.className = 'npc' + (isPlayer ? ' player' : '');
@@ -675,12 +908,10 @@ function placeNPC(emoji, x, y, title, isPlayer = false) {
   el.title = title;
   document.getElementById('office-bg').appendChild(el);
 }
-
 function getRoomCenter(roomId) {
   const r = ROOMS.find(x => x.id === roomId);
   return { x: r.x + r.w / 2 - 2, y: r.y + r.h / 2 - 2 };
 }
-
 function moveToRoom(roomId) {
   if (game.activeEvent) {
     toast('Najpierw rozwiąż bieżące wydarzenie!');
@@ -698,11 +929,7 @@ function moveToRoom(roomId) {
 function updateActions() {
   const container = document.getElementById('actions');
   container.innerHTML = '';
-
-  if (game.activeEvent) {
-    // choices are in modal
-    return;
-  }
+  if (game.activeEvent) return;
 
   const basic = [
     { label: '☕ Weź kawę', fn: () => {
@@ -721,6 +948,8 @@ function updateActions() {
         'Marcin na grupie: „Kto znowu zjadł mojego snickersa?”',
         'Paula: „Pamiętajcie o raporcie z nocy.”',
         'Halynka: „Ktoś znowu nie spuścił wody.”',
+        'Michał: „Ktoś ma spare life’a? Bo padłem.”',
+        'Janek (STRABAG): „Przyjechałem. Gdzie jest problem?”',
         'Nieznany numer: „Czy to ochrona? Bo u nas w open space ktoś lewitował.”'
       ];
       addLog(msgs[Math.floor(Math.random() * msgs.length)], 'event');
@@ -738,6 +967,43 @@ function updateActions() {
     }}
   ];
 
+  // Character-specific action flavor
+  if (selectedGuard) {
+    if (selectedGuard.id === 'szymon') {
+      basic.push({ label: '🃏 Walnij suchara', fn: () => {
+        const jokes = [
+          'Szymon: „Dlaczego ochroniarz nosi zegarek? Bo czas to pieniądz... a pieniądz to odpowiedzialność!”',
+          'Szymon: „Co mówi jeden detektor dymu do drugiego? Czuję curry!”',
+          'Szymon: „Jak nazywa się ochroniarz, który lubi judo? Maciuś w Apartamencie.”'
+        ];
+        addLog(jokes[Math.floor(Math.random() * jokes.length)], 'success');
+        game.stress = Math.max(0, game.stress - 5);
+        updateStats();
+      }});
+    }
+    if (selectedGuard.id === 'piotrek') {
+      basic.push({ label: '🥋 Pokaż karate', fn: () => {
+        addLog('Piotrek zrobił kilka kat. Halynka: „Ty znowu?” Michał: „Fajne combo.”', 'success');
+        game.stress = Math.max(0, game.stress - 8);
+        updateStats();
+      }});
+    }
+    if (selectedGuard.id === 'lukasz') {
+      basic.push({ label: '📋 Przeczytaj regulamin', fn: () => {
+        addLog('Łukasz głośno czyta paragraf 4.2. Indusi słuchają. Michał: „To dłuższe niż cutscenka.”', 'system');
+        game.prestige = Math.min(100, game.prestige + 3);
+        updateStats();
+      }});
+    }
+    if (selectedGuard.id === 'artur') {
+      basic.push({ label: '🗣️ Opowiedz historię', fn: () => {
+        addLog('Artur zaczyna historię o szkoleniu nowych. Trwa 8 minut. Nikt nie wie, jak się skończyła.', 'system');
+        game.stress = Math.min(100, game.stress + 3);
+        updateStats();
+      }});
+    }
+  }
+
   basic.forEach(a => {
     const btn = document.createElement('button');
     btn.className = 'action-btn';
@@ -750,26 +1016,28 @@ function updateActions() {
 // ================== EVENTS ==================
 function triggerRandomEvent() {
   if (game.activeEvent || !game.running) return;
+  let available = EVENTS.slice();
 
-  const available = EVENTS.filter(e => true); // all for now
+  // Jeśli gracz to Piotrek – większa szansa na eventy z Michałem
+  if (selectedGuard && selectedGuard.id === 'piotrek') {
+    const duo = available.filter(e => e.id === 'piotrek_michal_duo' || e.id === 'michal_games' || e.id === 'michal_ambiguous');
+    if (duo.length && Math.random() < 0.35) {
+      available = duo;
+    }
+  }
+
   const ev = available[Math.floor(Math.random() * available.length)];
   game.activeEvent = ev;
   game.incidents++;
   updateStats();
-
-  // move player attention
-  document.querySelectorAll('.room').forEach(r => r.classList.remove('has-event'));
   renderOffice();
-
   showEventModal(ev);
 }
-
 function showEventModal(ev) {
   document.getElementById('modal-title').textContent = ev.title;
   document.getElementById('modal-text').textContent = ev.text;
   const btns = document.getElementById('modal-btns');
   btns.innerHTML = '';
-
   ev.choices.forEach(ch => {
     const b = document.createElement('button');
     b.className = 'btn secondary';
@@ -779,35 +1047,27 @@ function showEventModal(ev) {
     b.onclick = () => resolveEvent(ch);
     btns.appendChild(b);
   });
-
   document.getElementById('modal').classList.add('show');
   addLog(`WYDARZENIE: ${ev.title}`, 'event');
 }
-
 function resolveEvent(choice) {
   document.getElementById('modal').classList.remove('show');
-
   const eff = choice.effect;
   game.stress = Math.max(0, Math.min(100, game.stress + (eff.stress || 0)));
   game.prestige = Math.max(0, Math.min(100, game.prestige + (eff.prestige || 0)));
-
   addLog(eff.log, eff.prestige >= 0 ? 'success' : 'danger');
   if (eff.stress < 0) toast(`Stres ${eff.stress}%`);
   if (eff.prestige > 0) toast(`Prestiż +${eff.prestige}`);
   if (eff.prestige < 0) toast(`Prestiż ${eff.prestige}`);
-
   game.activeEvent = null;
   updateStats();
   renderOffice();
   updateActions();
   setStatus('Wydarzenie rozwiązane. Czekaj na kolejne...');
-
-  // check end conditions
   if (game.stress >= 100) endGame(false, 'Stres Cię wykończył. Ochrona potrzebuje przerwy.');
   if (game.prestige <= 0) endGame(false, 'Prestiż spadł do zera. Marcin Cię zwolnił.');
   if (game.time >= 20 * 60) endGame(true, 'Koniec zmiany! Udało Ci się przetrwać dzień.');
 }
-
 function reportToBoss() {
   if (game.activeEvent) {
     toast('Najpierw rozwiąż wydarzenie!');
@@ -817,13 +1077,13 @@ function reportToBoss() {
     'Marcin: „Dobra, notuję. Nie zawracaj mi głowy bez potrzeby.”',
     'Marcin: „A Paula wie? Bo jak nie, to nie mów.”',
     'Marcin: „Świetnie. Jak coś poważnego – dzwoń. Jak curry – nie.”',
-    'Marcin: „Jestem na spotkaniu. Napisz SMS-a.”'
+    'Marcin: „Jestem na spotkaniu. Napisz SMS-a.”',
+    'Marcin: „Michał znowu gra? Powiedz mu, że to nie jest praca zdalna.”'
   ];
   addLog(replies[Math.floor(Math.random() * replies.length)], 'boss');
   game.prestige = Math.min(100, game.prestige + 1);
   updateStats();
 }
-
 function callPaula() {
   if (game.activeEvent) {
     toast('Najpierw rozwiąż wydarzenie!');
@@ -833,7 +1093,8 @@ function callPaula() {
     'Paula: „Dzięki za info. Trzymaj rękę na pulsie.”',
     'Paula: „Halynka znowu? Klasycznie.”',
     'Paula: „Jak Indusi coś kombinują – daj znać od razu.”',
-    'Paula: „Jesteś OK? Pamiętaj o przerwie.”'
+    'Paula: „Jesteś OK? Pamiętaj o przerwie.”',
+    'Paula: „Michał i Janek znowu się mijają? Folder rośnie.”'
   ];
   addLog(replies[Math.floor(Math.random() * replies.length)], 'boss');
   game.stress = Math.max(0, game.stress - 3);
@@ -855,48 +1116,53 @@ function startGame() {
     log: [],
     running: true
   };
-
   document.getElementById('player-name').textContent = selectedGuard.name;
   showScreen('game-screen');
   document.getElementById('log').innerHTML = '';
   addLog(`Służba rozpoczęta. Witaj, ${selectedGuard.name}!`, 'system');
   addLog('Szef ochrony: MARCIN | Zastępca: PAULA', 'boss');
-  addLog('W biurze: Indusi, Halynka i Katia. Powodzenia.', 'system');
+  addLog('W biurze: Indusi, Halynka, Katia, Michał (gry) i Janek ze STRABAG-u. Powodzenia.', 'system');
+
+  // Flavor start based on character
+  if (selectedGuard.id === 'piotrek') {
+    addLog('Piotrek: „Karate + ochrona = niepokonany. Chociaż... trochę się boję o curry.”', 'success');
+  } else if (selectedGuard.id === 'szymon') {
+    addLog('Szymon: „Dlaczego ochroniarz zawsze jest punktualny? Bo czas to jego największy wróg... i przyjaciel!”', 'success');
+  } else if (selectedGuard.id === 'lukasz') {
+    addLog('Łukasz otwiera regulamin na stronie 1. „Zaczynamy zgodnie z procedurą.”', 'system');
+  } else if (selectedGuard.id === 'macius') {
+    addLog('Maciuś: „Jak będzie wolna chwila – skoczę do Apartamentu Halynki na trening.”', 'system');
+  } else if (selectedGuard.id === 'artur') {
+    addLog('Artur: „Pamiętajcie – ja was wszystkich szkoliłem. Procedury przede wszystkim... i dobre historie.”', 'system');
+  } else if (selectedGuard.id === 'milena') {
+    addLog('Milena: „Nowy zespół... nowe wyzwania. Zapisuję wszystko.”', 'system');
+  }
+
   setStatus('Jesteś w dyżurce. Czekaj na wydarzenia lub zrób obchód.');
   renderOffice();
   updateActions();
   updateStats();
-
-  // game tick every 4 seconds = 1 minute in game
+  startMusic();
   window.gameInterval = setInterval(gameTick, 4000);
 }
-
 function gameTick() {
   if (!game.running) return;
   game.time += 1;
   updateStats();
-
-  // random event chance
-  if (!game.activeEvent && Math.random() < 0.18) {
+  if (!game.activeEvent && Math.random() < 0.20) {
     triggerRandomEvent();
   }
-
-  // passive stress
-  if (Math.random() < 0.1) {
+  if (Math.random() < 0.08) {
     game.stress = Math.min(100, game.stress + 1);
     updateStats();
   }
-
-  // end of day
   if (game.time >= 20 * 60) {
     endGame(true, 'Koniec zmiany! Udało Ci się przetrwać dzień w tym cyrku.');
   }
 }
-
 function endGame(won, msg) {
   game.running = false;
   clearInterval(window.gameInterval);
-
   document.getElementById('modal-title').textContent = won ? '🎉 KONIEC ZMIANY' : '💀 KONIEC GRY';
   document.getElementById('modal-text').textContent = msg + `\n\nPrestiż: ${game.prestige} | Incydenty: ${game.incidents} | Stres końcowy: ${game.stress}%`;
   const btns = document.getElementById('modal-btns');
@@ -911,8 +1177,6 @@ function endGame(won, msg) {
   btns.appendChild(b);
   document.getElementById('modal').classList.add('show');
 }
-
-// init
 </script>
 </body>
 </html>
